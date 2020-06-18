@@ -1,6 +1,6 @@
 # ElectroWeakino nanoAOD analysis
-This is a git repo for the ElectroWeakino analysis using nanoAOD ntuples
-The ntuple production steps can be found the this repo
+This is a git repo for the ElectroWeakino analysis using nanoAOD ntuples  
+The ntuple production steps can be found in this repo  
 https://github.com/wang-hui/electroWeakino_NanoAOD
 
 1. setup CMSSW. Any 10xx should work
