@@ -14,12 +14,14 @@ from PhysicsTools.NanoAODTools.postprocessing.framework.datamodel import Collect
 from PhysicsTools.NanoAODTools.postprocessing.framework.eventloop import Module
 
 #===================== define input/output here ===========================
-OutputFile = "nanoAOD_test_plots.root"
+OutputFile = "TTbar_nanoAOD_test_plots.root"
 MaxEvents = 0        #set to 0 to run all events in each file
 MaxFiles = -1        #set to -1 to run all files in file list
 #MaxFiles = 10
 
 #====================== define custome cuts here===========================
+CheckMother = False
+
 FatJetPtCut = 500
 LepPtCut = 10
 EtaCut = 2.4
@@ -32,6 +34,12 @@ class ExampleAnalysis(Module):
     
     def beginJob(self,histFile=None,histDirName=None):
         Module.beginJob(self,histFile,histDirName)
+
+        #===================== cross check mother particles =============================
+        self.IsTTbar_h=ROOT.TH1F('IsTTbar_h', 'is TTbar event', 2, 0, 2)
+        self.addObject(self.IsTTbar_h)
+        self.IsSignal_h=ROOT.TH1F('IsSignal_h', 'is Signal event', 2, 0, 2)
+        self.addObject(self.IsSignal_h)
 
         #===================== AK12Jet leptonic leg NSubJetness =========================
         self.AK12JetLepLegTau1_h=ROOT.TH1F('AK12JetLepLegTau1_h', 'AK12Jet leptonic leg tau1', 100, 0, 1)
@@ -62,6 +70,20 @@ class ExampleAnalysis(Module):
         self.addObject(self.AK12JetHadLegTau3Tau1_h)
         self.AK12JetHadLegTau3Tau2_h=ROOT.TH1F('AK12JetHadLegTau3Tau2_h', 'AK12Jet hadraonic leg tau3/tau2', 100, 0, 1)
         self.addObject(self.AK12JetHadLegTau3Tau2_h)
+
+    def check_mother(self, GenParts):
+        IsTTbar = False
+        IsSignal = False
+        for GenPart in GenParts:
+            pdgId = abs(GenPart.pdgId)
+            if GenPart.genPartIdxMother == 0: #means current GenPart is mother
+                if pdgId == 6:
+                    IsTTbar = True
+                    break
+                if pdgId == 1000022 or pdgId == 1000024:
+                    IsSignal = True
+                    break
+        return IsTTbar, IsSignal
 
     def sel_high_pt_lep(self, Muons, Electrons):
         SelLepList = []
@@ -101,8 +123,14 @@ class ExampleAnalysis(Module):
         Electrons = Collection(event, "Electron")
         Muons = Collection(event, "Muon")
         AK12Jets = Collection(event, "selectedPatJetsAK12PFPuppi")
-   
+        GenParts = Collection(event, "GenPart")
+
         #================ analyze each event ======================================
+        if CheckMother:
+            IsTTbar, IsSignal = self.check_mother(GenParts)
+            self.IsTTbar_h.Fill(IsTTbar)
+            self.IsSignal_h.Fill(IsSignal)
+
         HighPtLep = self.sel_high_pt_lep(Muons, Electrons)
         AK12JetHeavy, AK12JetLight = self.sel_high_mass_fat_jet(AK12Jets)
 
