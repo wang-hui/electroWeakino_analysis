@@ -1,16 +1,17 @@
 int Plot_compare()
 {
 	const bool plot_log = false;
-	std::vector<TString> hist_list = {"AK12JetHadLegTau3Tau1_h"};
+	std::vector<TString> hist_list = {"AK12JetLepLegTau3Tau1_h"};
 	std::vector<TString> hist2_list = hist_list;
-	hist2_list = {"AK12JetsHadLeg_tau3_tau1_h"};
+	hist2_list = {"RecKT12JetLepLegTau3Tau1_h"};
 
-	TString f1_name = "nanoAOD_test_plots"; 
-	TString f1_lag = "new";
 	TString f1_folder = "";
-	TString f2_name = "nanoAOD_2017_TTJets_SingleLeptFromT_plots"; 
-	TString f2_lag = "old";
-	TString f2_folder = "results/";
+	TString f1_name = "TTbar_nanoAOD_test_plots"; 
+	TString f1_lag = "AK12JetLepLegTau3Tau1";
+
+	TString f2_folder = "";
+	TString f2_name = "TTbar_nanoAOD_test_plots"; 
+	TString f2_lag = "RecKT12JetLepLegTau3Tau1";
 	TString hist_folder = "plots/";
 
 	int rebin = 1; 

@@ -13,6 +13,8 @@ from PhysicsTools.NanoAODTools.postprocessing.framework.postprocessor import Pos
 from PhysicsTools.NanoAODTools.postprocessing.framework.datamodel import Collection, Object
 from PhysicsTools.NanoAODTools.postprocessing.framework.eventloop import Module
 
+from fastjet import *
+
 #===================== define input/output here ===========================
 OutputFile = "TTbar_nanoAOD_test_plots.root"
 MaxEvents = 0        #set to 0 to run all events in each file
@@ -41,6 +43,8 @@ class ExampleAnalysis(Module):
         self.addObject(self.IsTTbar_h)
         self.IsSignal_h=ROOT.TH1F('IsSignal_h', 'is Signal event', 2, 0, 2)
         self.addObject(self.IsSignal_h)
+        self.LepGenMatch_h=ROOT.TH1F('LepGenMatch_h', '0: all. 1: gen match. 2: mother W', 3, 0, 3)
+        self.addObject(self.LepGenMatch_h)
 
         #===================== AK12Jet SD mass =========================
         self.AK12JetHeavySDMass_h=ROOT.TH1F('AK12JetHeavySDMass_h', 'AK12Jet heavy SD mass', 100, 0, 500)
@@ -61,12 +65,32 @@ class ExampleAnalysis(Module):
         self.addObject(self.AK12JetLepLegTau3_h)
         self.AK12JetLepLegTau4_h=ROOT.TH1F('AK12JetLepLegTau4_h', 'AK12Jet leptonic leg tau4', 100, 0, 1)
         self.addObject(self.AK12JetLepLegTau4_h)
+        self.AK12JetGenMatchLepLegTau3Tau1_h=ROOT.TH1F('AK12JetGenMatchLepLegTau3Tau1_h', 'AK12Jet gen match leptonic leg tau3/tau1', 100, 0, 1)
+        self.addObject(self.AK12JetGenMatchLepLegTau3Tau1_h)
         self.AK12JetLepLegTau3Tau1_h=ROOT.TH1F('AK12JetLepLegTau3Tau1_h', 'AK12Jet leptonic leg tau3/tau1', 100, 0, 1)
         self.addObject(self.AK12JetLepLegTau3Tau1_h)
         self.AK12JetLepLegTau4Tau2_h=ROOT.TH1F('AK12JetLepLegTau4Tau2_h', 'AK12Jet leptonic leg tau4/tau2', 100, 0, 1)
         self.addObject(self.AK12JetLepLegTau4Tau2_h)
         self.AK12JetLepLegTau4Tau1_h=ROOT.TH1F('AK12JetLepLegTau4Tau1_h', 'AK12Jet leptonic leg tau4/tau1', 100, 0, 1)
         self.addObject(self.AK12JetLepLegTau4Tau1_h)
+
+        #===================== RecKT and AK12Jet leptonic leg cross check =========================
+        self.AK12JetLepLegRawPt_h=ROOT.TH1F('AK12JetLepLegRawPt_h', 'AK12Jet leptonic leg raw pt', 100, 0, 1000)
+        self.addObject(self.AK12JetLepLegRawPt_h)
+        self.RecKT12JetLepLegPt_h=ROOT.TH1F('RecKT12JetLepLegPt_h', 'reclusted KT12Jet leptonic leg pt', 100, 0, 1000)
+        self.addObject(self.RecKT12JetLepLegPt_h)
+
+        #===================== RecKT12Jet leptonic leg NSubJetness =========================
+        self.RecKT12JetLepLegTau1_h=ROOT.TH1F('RecKT12JetLepLegTau1_h', 'RecKT12Jet leptonic leg tau1', 100, 0, 1)
+        self.addObject(self.RecKT12JetLepLegTau1_h)
+        self.RecKT12JetLepLegTau2_h=ROOT.TH1F('RecKT12JetLepLegTau2_h', 'RecKT12Jet leptonic leg tau2', 100, 0, 1)
+        self.addObject(self.RecKT12JetLepLegTau2_h)
+        self.RecKT12JetLepLegTau3_h=ROOT.TH1F('RecKT12JetLepLegTau3_h', 'RecKT12Jet leptonic leg tau3', 100, 0, 1)
+        self.addObject(self.RecKT12JetLepLegTau3_h)
+        self.RecKT12JetLepLegTau4_h=ROOT.TH1F('RecKT12JetLepLegTau4_h', 'RecKT12Jet leptonic leg tau4', 100, 0, 1)
+        self.addObject(self.RecKT12JetLepLegTau4_h)
+        self.RecKT12JetLepLegTau3Tau1_h=ROOT.TH1F('RecKT12JetLepLegTau3Tau1_h', 'RecKT12Jet leptonic leg tau3/tau1', 100, 0, 1)
+        self.addObject(self.RecKT12JetLepLegTau3Tau1_h)
 
         #===================== AK12Jet hadraonic leg NSubJetness =========================
         self.AK12JetHadLegTau1_h=ROOT.TH1F('AK12JetHadLegTau1_h', 'AK12Jet hadraonic leg tau1', 100, 0, 1)
@@ -77,6 +101,8 @@ class ExampleAnalysis(Module):
         self.addObject(self.AK12JetHadLegTau3_h)
         self.AK12JetHadLegTau4_h=ROOT.TH1F('AK12JetHadLegTau4_h', 'AK12Jet hadraonic leg tau4', 100, 0, 1)
         self.addObject(self.AK12JetHadLegTau4_h)
+        self.AK12JetGenMatchHadLegTau3Tau1_h=ROOT.TH1F('AK12JetGenMatchHadLegTau3Tau1_h', 'AK12Jet gen match hadraonic leg tau3/tau1', 100, 0, 1)
+        self.addObject(self.AK12JetGenMatchHadLegTau3Tau1_h)
         self.AK12JetHadLegTau3Tau1_h=ROOT.TH1F('AK12JetHadLegTau3Tau1_h', 'AK12Jet hadraonic leg tau3/tau1', 100, 0, 1)
         self.addObject(self.AK12JetHadLegTau3Tau1_h)
         self.AK12JetHadLegTau3Tau2_h=ROOT.TH1F('AK12JetHadLegTau3Tau2_h', 'AK12Jet hadraonic leg tau3/tau2', 100, 0, 1)
@@ -126,6 +152,68 @@ class ExampleAnalysis(Module):
                     break
         return IsTTbar, IsSignal
 
+    def pf_cand_in_fat_jet(self, JetPFCands, FatJet, FatJetSize):
+        PFCandList = []
+        FatJetTLV = FatJet.p4()
+        for JetPFCand in JetPFCands:
+            if JetPFCand.DeltaR(FatJetTLV) < FatJetSize:
+                PFCandList.append(JetPFCand)
+        return PFCandList
+
+    def recluster_kt12_jet(self, JetPFCands):
+        KT12JetDef = JetDefinition(kt_algorithm, 1.2)
+        PseudoJetList = []
+        for JetPFCand in JetPFCands:
+            PseudoJetList.append(PseudoJet(JetPFCand.p4().Px(), JetPFCand.p4().Py(), JetPFCand.p4().Pz(), JetPFCand.p4().E()))
+        RecKT12Jets = KT12JetDef(PseudoJetList)
+        RecKT12Jet = RecKT12Jets[0]
+        if len(RecKT12Jets) > 1:
+            print "Warning! more than one reclustered KT12Jets"
+            #Descend sort RecKT12Jets by pt
+            RecKT12Jet = sorted(RecKT12Jets, key=lambda x: x.pt(), reverse=True)[0]
+        return RecKT12Jet
+
+    def decluster_rec_jet(self, RecJet):
+        SubJetsList = []
+        for i in range(4):
+            SubJets = RecJet.exclusive_subjets_up_to(i+1)
+            SubJetsList.append(SubJets)
+        return SubJetsList
+
+    def calc_nsubjetness(self, AxisList, JetPFCands, FatJetSize):
+        Dist = 0
+        Norm = 0
+        for JetPFCand in JetPFCands:
+            Pt = JetPFCand.pt
+            dR = 999
+            for Axis in AxisList:
+                AxisTLV = ROOT.TLorentzVector(Axis.px(), Axis.py(), Axis.pz(), Axis.E())
+                dRTemp = JetPFCand.DeltaR(AxisTLV)
+                if dR > dRTemp:
+                    dR = dRTemp
+            Dist += Pt * dR
+            Norm += Pt * FatJetSize
+        return Dist / Norm
+
+    def sel_gen_lep(self, GenParts):
+        SelLepList = []
+        for GenPart in GenParts:
+            pdgId = abs(GenPart.pdgId)
+            if pdgId == 11 or pdgId == 13:
+                SelLepList.append(GenPart)
+        return SelLepList
+
+    def get_matched_gen_lep(self, GenLepList, HighPtLep):
+        HighPtLepTLV = HighPtLep.p4()
+        MatchedGenLep = None
+        dR = 0.2
+        for GenLep in GenLepList:
+            dRTemp = GenLep.DeltaR(HighPtLepTLV)
+            if dR > dRTemp:
+                dR = dRTemp
+                MatchedGenLep = GenLep
+        return MatchedGenLep
+
     def sel_high_pt_lep(self, Muons, Electrons):
         SelLepList = []
         for Muon in Muons:
@@ -172,6 +260,7 @@ class ExampleAnalysis(Module):
         AK12Jets = Collection(event, "selectedPatJetsAK12PFPuppi")
         FatJets = Collection(event, "FatJet")
         GenParts = Collection(event, "GenPart")
+        JetPFCands = Collection(event, "JetPFCands")
 
         #================ analyze each event ======================================
         if CheckMother:
@@ -187,10 +276,11 @@ class ExampleAnalysis(Module):
             self.AK12JetLightSDMass_h.Fill(AK12JetLight.softdropMass)
 
             AK12JetLepLeg, AK12JetHadLeg = self.sel_fat_jets_lep_and_had_legs(HighPtLep, AK12JetHeavy, AK12JetLight, 1.2)
-            if AK12JetLepLeg is not None and AK12JetHadLeg is not None: 
+            if AK12JetLepLeg is not None and AK12JetHadLeg is not None:
                 self.AK12JetLepLegSDMass_h.Fill(AK12JetLepLeg.softdropMass)
                 self.AK12JetHadLegSDMass_h.Fill(AK12JetHadLeg.softdropMass)
 
+                #=================== Njettiness by JetToolBox ======================
                 LepLegTau1 = AK12JetLepLeg.NjettinessAK12Puppi_tau1
                 LepLegTau2 = AK12JetLepLeg.NjettinessAK12Puppi_tau2
                 LepLegTau3 = AK12JetLepLeg.NjettinessAK12Puppi_tau3
@@ -215,6 +305,37 @@ class ExampleAnalysis(Module):
                 self.AK12JetHadLegTau4_h.Fill(HadLegTau4)
                 self.AK12JetHadLegTau3Tau1_h.Fill(HadLegTau3 / HadLegTau1)
                 self.AK12JetHadLegTau3Tau2_h.Fill(HadLegTau3 / HadLegTau2)
+
+                #=================== recalculate Njettiness ======================
+                AK12JetLepLegPFCands = self.pf_cand_in_fat_jet(JetPFCands, AK12JetLepLeg, 1.2)
+
+                RecKT12JetLepLeg = self.recluster_kt12_jet(AK12JetLepLegPFCands)
+                self.RecKT12JetLepLegPt_h.Fill(RecKT12JetLepLeg.pt())
+                self.AK12JetLepLegRawPt_h.Fill(AK12JetLepLeg.pt * (1 - AK12JetLepLeg.rawFactor))
+                RecKT12JetLepLegSubJetsList = self.decluster_rec_jet(RecKT12JetLepLeg)
+
+                RecKT12JetLepLegTau1 = self.calc_nsubjetness(RecKT12JetLepLegSubJetsList[0], AK12JetLepLegPFCands, 1.2)
+                RecKT12JetLepLegTau2 = self.calc_nsubjetness(RecKT12JetLepLegSubJetsList[1], AK12JetLepLegPFCands, 1.2)
+                RecKT12JetLepLegTau3 = self.calc_nsubjetness(RecKT12JetLepLegSubJetsList[2], AK12JetLepLegPFCands, 1.2)
+                RecKT12JetLepLegTau4 = self.calc_nsubjetness(RecKT12JetLepLegSubJetsList[3], AK12JetLepLegPFCands, 1.2)
+
+                self.RecKT12JetLepLegTau1_h.Fill(RecKT12JetLepLegTau1)
+                self.RecKT12JetLepLegTau2_h.Fill(RecKT12JetLepLegTau2)
+                self.RecKT12JetLepLegTau3_h.Fill(RecKT12JetLepLegTau3)
+                self.RecKT12JetLepLegTau4_h.Fill(RecKT12JetLepLegTau4)
+                self.RecKT12JetLepLegTau3Tau1_h.Fill(RecKT12JetLepLegTau3 / RecKT12JetLepLegTau1)
+
+                self.LepGenMatch_h.Fill(0)
+                GenLepList = self.sel_gen_lep(GenParts)
+                MatchedGenLep = self.get_matched_gen_lep(GenLepList, HighPtLep)
+                if MatchedGenLep is not None:
+                    self.LepGenMatch_h.Fill(1)
+                    MatchedGenLepMother = GenParts[MatchedGenLep.genPartIdxMother]
+                    #gen lep's mother is W
+                    if abs(MatchedGenLepMother.pdgId) == 24:
+                        self.LepGenMatch_h.Fill(2)
+                        self.AK12JetGenMatchLepLegTau3Tau1_h.Fill(LepLegTau3 / LepLegTau1)
+                        self.AK12JetGenMatchHadLegTau3Tau1_h.Fill(HadLegTau3 / HadLegTau1)
 
         FatJetHeavy, FatJetLight = self.sel_high_mass_fat_jet(FatJets, True)
 
