@@ -1,29 +1,31 @@
 int Plot_everything()
 {
-    bool plot_log = false;
+    bool plot_log = true;
     bool shape_compare = false;
-    int rebin = 2; 
+    int rebin = 1; 
 
     TString results_folder = "";
     TString hist_folder = "plots/";
-    TString h_tot_events = "IsSignal_h";
+    TString h_tot_events = "BaseLineTest_h";
 
     std::vector<TString> hist_list =
     {
-        "AK12JetHeavySDMass_h", "AK12JetLightSDMass_h",
-        "AK12JetLepLegSDMass_h", "AK12JetHadLegSDMass_h",
-        "AK12JetLepLegTau3Tau1_h", "AK12JetHadLegTau3Tau1_h",
+        //"AK12JetLepLegTau3Tau1_h", "AK12JetHadLegTau3Tau1_h",
+        //"AK12JetHeavySDMass_h", "AK12JetLightSDMass_h",
+        //"AK12JetLepLegSDMass_h", "AK12JetHadLegSDMass_h",
+        //"AK12JetImbaSDMass_h", "AK12JetAveSDMass_h",
+        "BaseLineTest_h", "LepGenMatch_h"
     };
 
     struct st {TString file; TString name; Color_t color;};
 
     std::vector<st> struct_list =
     {
-        (st){"TTbar_nanoAOD_test", "TTbar", kBlack},
-        //(st){"nanoAOD_2017_QCD_HT1000to1500", "QCD", kYellow+1},
-        //(st){"nanoAOD_2017_mn1_100_mx1_110", "signal(100,110)", kRed},
-        //(st){"nanoAOD_2017_mn1_300_mx1_310", "signal(300,310)", kBlue},
-        //(st){"nanoAOD_2017_mn1_300_mx1_350", "signal(300,350)", kGreen},
+        (st){"nanoAOD_2017_TTJets_SingleLeptFromT", "TTbar", kBlack},
+        (st){"nanoAOD_2017_QCD_HT1000to1500", "QCD", kYellow+1},
+        (st){"nanoAOD_2017_mn1_100_mx1_110", "signal(100,110)", kRed},
+        (st){"nanoAOD_2017_mn1_300_mx1_310", "signal(300,310)", kBlue},
+        (st){"nanoAOD_2017_mn1_300_mx1_350", "signal(300,350)", kGreen},
     };
 
     for(int i = 0; i < hist_list.size(); i++)
@@ -60,9 +62,11 @@ int Plot_everything()
             if(shape_compare) h1->Scale(reff/h1->Integral());
             else
             {
-                float f1_tot = ((TH1F*)f1->Get(hist_folder + h_tot_events))->GetEntries();
+                float f1_tot = ((TH1F*)f1->Get(hist_folder + h_tot_events))->GetBinContent(1);
                 h1->Scale(reff/f1_tot);
             }
+            int TotBins = h1->GetSize() - 2;
+            std::cout << f1_name << " LastBinContent " << h1->GetBinContent(TotBins) << std::endl;
             plot_list.push_back(h1);
             float h_max = h1->GetMaximum();
             max_y = std::max(max_y, h_max);
@@ -79,7 +83,6 @@ int Plot_everything()
             TH1F* h1 = plot_list.at(i);
             if(i == 0)
             {
-                h1->SetMaximum(max_y);
                 h1->GetYaxis()->SetRangeUser(min_y, max_y);
                 h1->Draw("hist");
             }
@@ -89,7 +92,7 @@ int Plot_everything()
 
         TString shape_compare_TS = "";
         if(shape_compare) shape_compare_TS = "_shape_comapre";
-        mycanvas->SaveAs("plots/" + hist_name + shape_compare_TS + ".png");
+        mycanvas->SaveAs("plots_temp/" + hist_name + shape_compare_TS + ".png");
     }
 
     return 0;
