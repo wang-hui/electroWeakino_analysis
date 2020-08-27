@@ -91,7 +91,7 @@ int Plot_everything()
         leg->Draw("same");
 
         TString shape_compare_TS = "";
-        if(shape_compare) shape_compare_TS = "_shape_comapre";
+        if(shape_compare) shape_compare_TS = "_shape_compare";
         mycanvas->SaveAs("plots_temp/" + hist_name + shape_compare_TS + ".png");
     }
 
