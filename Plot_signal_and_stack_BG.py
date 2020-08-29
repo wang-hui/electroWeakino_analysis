@@ -57,14 +57,15 @@ MyHistDir = "plots/"
 MyTotEvent = "BaseLineTest_h"
 MyTotEventDir = "plots/"
 MyLumi = 140
+ResultsDir = ""
 
 MyLeg = rt.TLegend(0.5,0.65,0.89,0.89)
 
 TTbarProcess = process("TTbar", MyHistDir + MyHist, MyLumi, MyTotEventDir + MyTotEvent, MyLeg, rt.kYellow - 9)
-TTbarProcess.add_file("results/nanoAOD_2017_TTJets_SingleLeptFromT_plots.root", 182.7 * 2)
+TTbarProcess.add_file(ResultsDir + "nanoAOD_2017_TTJets_SingleLeptFromT_plots.root", 182.7 * 2)
 
 QCDProcess = process("QCD", MyHistDir + MyHist, MyLumi, MyTotEventDir + MyTotEvent, MyLeg, rt.kOrange - 3)
-QCDProcess.add_file("results/nanoAOD_2017_QCD_HT1000to1500_plots.root", 1064)
+QCDProcess.add_file(ResultsDir + "nanoAOD_2017_QCD_HT1000to1500_plots.root", 1064)
 #QCDProcess.add_file("QCD_HT1500toInf_plots.root", 121.5 + 25.42)
 
 MyHS = rt.THStack()
@@ -73,15 +74,15 @@ MyHS.Add(QCDProcess.return_process())
 
 SignalProcessList = []
 SignalProcess_1 = process("Signal(100,110)", MyHistDir + MyHist, MyLumi, MyTotEventDir + MyTotEvent, MyLeg, rt.kRed)
-SignalProcess_1.add_file("results/nanoAOD_2017_mn1_100_mx1_110_plots.root", 1807.39 / 1000)
+SignalProcess_1.add_file(ResultsDir + "nanoAOD_2017_mn1_100_mx1_110_plots.root", 1807.39 / 1000)
 SignalProcessList.append(SignalProcess_1.return_process())
 
 SignalProcess_2 = process("Signal(300,310)", MyHistDir + MyHist, MyLumi, MyTotEventDir + MyTotEvent, MyLeg, rt.kBlue)
-SignalProcess_2.add_file("results/nanoAOD_2017_mn1_300_mx1_310_plots.root", 20.1372 / 1000)
+SignalProcess_2.add_file(ResultsDir + "nanoAOD_2017_mn1_300_mx1_310_plots.root", 20.1372 / 1000)
 SignalProcessList.append(SignalProcess_2.return_process())
 
 SignalProcess_3 = process("Signal(300,350)", MyHistDir + MyHist, MyLumi, MyTotEventDir + MyTotEvent, MyLeg, rt.kGreen)
-SignalProcess_3.add_file("results/nanoAOD_2017_mn1_300_mx1_350_plots.root", 13.7303 / 1000)
+SignalProcess_3.add_file(ResultsDir + "nanoAOD_2017_mn1_300_mx1_350_plots.root", 13.7303 / 1000)
 SignalProcessList.append(SignalProcess_3.return_process())
 
 MyCanvas = rt.TCanvas("MyCanvas", "MyCanvas", 600, 600)
@@ -95,4 +96,4 @@ MyHS.Draw("hist")
 for SignalProcess in SignalProcessList: SignalProcess.Draw("histsame")
 MyLeg.Draw("same")
 
-MyCanvas.SaveAs("plots/" + MyHist + "_stack.png")
+MyCanvas.SaveAs("plots_temp/" + MyHist + "_stack.png")

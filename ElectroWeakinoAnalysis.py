@@ -19,14 +19,14 @@ from fastjet import *
 OutputFile = ""      #if set to "", then OutputFile = <FileListName> + _plots.root
 MaxEvents = 0        #set to 0 to run all events in each file
 MaxFiles = -1        #set to -1 to run all files in file list
-#MaxFiles = 10
+#MaxFiles = 5
 
 #====================== define custome cuts here===========================
 FatJetPtCut = 500
 FatJetMassCut = 50
 LepPtCut = 10
 EtaCut = 2.4
-#muons have loose id by default
+MuIdCut = "looseId" #options: "looseId", "mediumId", "tightId"
 EleIdCut = 3 #cut-based ID Fall17 V2 (0:fail, 1:veto, 2:loose, 3:medium, 4:tight)
 
 class ExampleAnalysis(Module):
@@ -39,6 +39,8 @@ class ExampleAnalysis(Module):
         #==================== GenLep study ============================
         self.GenElePt_h = ROOT.TH1F('GenElePt_h', 'GenElePt_h', 100, 0, 50)
         self.addObject(self.GenElePt_h)
+        self.EleRelIso03_h = ROOT.TH1F('EleRelIso03_h', 'EleRelIso03_h', 100, 0, 0.2)
+        self.addObject(self.EleRelIso03_h)
         self.EleIsPFCand_h = ROOT.TH1F('EleIsPFCand_h', 'EleIsPFCand_h', 2, 0, 2)
         self.addObject(self.EleIsPFCand_h)
         self.EleIsPFCandGenMatch_h = ROOT.TH1F('EleIsPFCandGenMatch_h', 'EleIsPFCandGenMatch_h', 2, 0, 2)
@@ -48,6 +50,8 @@ class ExampleAnalysis(Module):
 
         self.GenMuPt_h = ROOT.TH1F('GenMuPt_h', 'GenMuPt_h', 100, 0, 50)
         self.addObject(self.GenMuPt_h)
+        self.MuRelIso03_h = ROOT.TH1F('MuRelIso03_h', 'MuRelIso03_h', 100, 0, 0.2)
+        self.addObject(self.MuRelIso03_h)
         self.MuIsPFCand_h = ROOT.TH1F('MuIsPFCand_h', 'MuIsPFCand_h', 2, 0, 2)
         self.addObject(self.MuIsPFCand_h)
         self.MuIsPFCandGenMatch_h = ROOT.TH1F('MuIsPFCandGenMatch_h', 'MuIsPFCandGenMatch_h', 2, 0, 2)
@@ -55,6 +59,8 @@ class ExampleAnalysis(Module):
         self.MuNotPFCandGenMatch_h = ROOT.TH1F('MuNotPFCandGenMatch_h', 'MuNotPFCandGenMatch_h', 2, 0, 2)
         self.addObject(self.MuNotPFCandGenMatch_h)
 
+        self.EleOrMu_h=ROOT.TH1F('EleOrMu_h', '0: HighPtLep is electron. 1: is muon', 2, 0, 2)
+        self.addObject(self.EleOrMu_h)
         self.LepGenMatchNoCut_h=ROOT.TH1F('LepGenMatchNoCut_h', '0: nLep>=1(no other cut). 1: gen match. 2: mother W', 3, 0, 3)
         self.addObject(self.LepGenMatchNoCut_h)
         self.LepGenMatch_h=ROOT.TH1F('LepGenMatch_h', '0: nLep>=1(nAK12Jets>=2). 1: gen match. 2: mother W', 3, 0, 3)
@@ -70,6 +76,8 @@ class ExampleAnalysis(Module):
         self.addObject(self.AK12JetHadLegSDMass_h)
         self.AK12JetAveSDMass_h=ROOT.TH1F('AK12JetAveSDMass_h', 'AK12Jet SD mass, (lep+had)/2', 100, 0, 500)
         self.addObject(self.AK12JetAveSDMass_h)
+        self.AK12JetAveSDMassBaseline_h=ROOT.TH1F('AK12JetAveSDMassBaseline_h', 'AK12Jet SD mass after baseline, (lep+had)/2', 100, 0, 500)
+        self.addObject(self.AK12JetAveSDMassBaseline_h)
         self.AK12JetImbaSDMass_h=ROOT.TH1F('AK12JetImbaSDMass_h', 'AK12Jet SD mass, |lep-had|/(lep+had)', 100, 0, 1)
         self.addObject(self.AK12JetImbaSDMass_h)
 
@@ -160,7 +168,7 @@ class ExampleAnalysis(Module):
         self.addObject(self.FatJetHadLegTau3Tau2_h)
 
         #===================== baseline test ===========================================
-        self.BaseLineTest_h=ROOT.TH1F('BaseLineTest_h', '0: all. 1: nLep>=1. 2: nAK12Jets>=2. 3: lep in AK12Jet. 4: tau3/tau1 < 0.4', 5, 0, 5)
+        self.BaseLineTest_h=ROOT.TH1F('BaseLineTest_h', '0: all. 1: nLep>=1. 2: nAK12Jets>=2. 3: lep in AK12Jet. 4: NSubjetness cuts', 5, 0, 5)
         self.addObject(self.BaseLineTest_h)
 
     def pf_cand_in_fat_jet(self, JetPFCands, FatJet, FatJetSize):
@@ -263,14 +271,16 @@ class ExampleAnalysis(Module):
 
     def sel_high_pt_muon(self, Muons):
         for Muon in Muons:
-            if Muon.pt > LepPtCut and abs(Muon.eta) < EtaCut:
+            #if Muon.mediumId and (not Muon.looseId):
+            #    print "Warning! a medium muon is not loose muon"
+            if Muon.pt > LepPtCut and abs(Muon.eta) < EtaCut and Muon.isPFcand and getattr(Muon, MuIdCut):
                 return Muon
                 break
         return None
 
     def sel_high_pt_electron(self, Electrons):
         for Electron in Electrons:
-            if Electron.pt > LepPtCut and abs(Electron.eta) < EtaCut and Electron.cutBased >= EleIdCut:
+            if Electron.pt > LepPtCut and abs(Electron.eta) < EtaCut and Electron.isPFcand and Electron.cutBased >= EleIdCut:
                 return Electron
                 break
         return None
@@ -316,6 +326,7 @@ class ExampleAnalysis(Module):
         MatchedGenMu = None
         SelMu = self.sel_high_pt_muon(Muons)
         if SelMu is not None:
+            self.MuRelIso03_h.Fill(SelMu.pfRelIso03_all)
             self.MuIsPFCand_h.Fill(SelMu.isPFcand)
             MatchedGenMu = self.get_matched_gen_lep(GenMuons, SelMu)
             MuGenMatch = MatchedGenMu is not None
@@ -327,6 +338,7 @@ class ExampleAnalysis(Module):
         MatchedGenEle = None
         SelEle = self.sel_high_pt_electron(Electrons)
         if SelEle is not None:
+            self.EleRelIso03_h.Fill(SelEle.pfRelIso03_all)
             self.EleIsPFCand_h.Fill(SelEle.isPFcand)
             MatchedGenEle = self.get_matched_gen_lep(GenElectrons, SelEle)
             EleGenMatch = MatchedGenEle is not None
@@ -337,19 +349,22 @@ class ExampleAnalysis(Module):
 
         HighPtLep, EleOrMu = self.sel_high_pt_lep(SelMu, SelEle)
         if HighPtLep is not None:
-            self.LepGenMatchNoCut_h.Fill(0)
-            if EleOrMu == "Ele" and MatchedGenEle is not None:
-                self.LepGenMatchNoCut_h.Fill(1)
-                GenMotherIsW = self.gen_mom_is_w(MatchedGenEle, GenParts)
-                if GenMotherIsW:
-                    self.LepGenMatchNoCut_h.Fill(2)
-            if EleOrMu == "Mu" and MatchedGenMu is not None:
-                self.LepGenMatchNoCut_h.Fill(1)
-                GenMotherIsW = self.gen_mom_is_w(MatchedGenMu, GenParts)
-                if GenMotherIsW:
-                    self.LepGenMatchNoCut_h.Fill(2)
-
             self.BaseLineTest_h.Fill(1)
+            self.LepGenMatchNoCut_h.Fill(0)
+            if EleOrMu == "Ele":
+                self.EleOrMu_h.Fill(0)
+                if MatchedGenEle is not None:
+                    self.LepGenMatchNoCut_h.Fill(1)
+                    GenMotherIsW = self.gen_mom_is_w(MatchedGenEle, GenParts)
+                    if GenMotherIsW:
+                        self.LepGenMatchNoCut_h.Fill(2)
+            if EleOrMu == "Mu":
+                self.EleOrMu_h.Fill(1)
+                if MatchedGenMu is not None:
+                    self.LepGenMatchNoCut_h.Fill(1)
+                    GenMotherIsW = self.gen_mom_is_w(MatchedGenMu, GenParts)
+                    if GenMotherIsW:
+                        self.LepGenMatchNoCut_h.Fill(2)
 
             #==========================AK12 jets============================
             AK12JetHeavy, AK12JetLight = self.sel_high_mass_fat_jet(AK12Jets, "softdropMass")
@@ -400,8 +415,25 @@ class ExampleAnalysis(Module):
                     self.AK12JetHadLegTau3Tau1_h.Fill(HadLegTau3 / HadLegTau1)
                     self.AK12JetHadLegTau3Tau2_h.Fill(HadLegTau3 / HadLegTau2)
 
-                    if LepLegTau3 / LepLegTau1 < 0.4 and HadLegTau3 / HadLegTau1 < 0.4:
+                    if LepLegTau3 / LepLegTau2 < 0.7 and LepLegTau4 / LepLegTau2 < 0.55 and HadLegTau3 / HadLegTau2 < 0.65:
                         self.BaseLineTest_h.Fill(4)
+                        self.AK12JetAveSDMassBaseline_h.Fill(AveSDMass)
+
+                    self.LepGenMatch_h.Fill(0)
+                    if EleOrMu == "Ele" and MatchedGenEle is not None:
+                        self.LepGenMatch_h.Fill(1)
+                        GenMotherIsW = self.gen_mom_is_w(MatchedGenEle, GenParts)
+                        if GenMotherIsW:
+                            self.LepGenMatch_h.Fill(2)
+                            self.AK12JetGenMatchLepLegTau3Tau1_h.Fill(LepLegTau3 / LepLegTau1)
+                            self.AK12JetGenMatchHadLegTau3Tau1_h.Fill(HadLegTau3 / HadLegTau1)
+                    if EleOrMu == "Mu" and MatchedGenMu is not None:
+                        self.LepGenMatch_h.Fill(1)
+                        GenMotherIsW = self.gen_mom_is_w(MatchedGenMu, GenParts)
+                        if GenMotherIsW:
+                            self.LepGenMatch_h.Fill(2)
+                            self.AK12JetGenMatchLepLegTau3Tau1_h.Fill(LepLegTau3 / LepLegTau1)
+                            self.AK12JetGenMatchHadLegTau3Tau1_h.Fill(HadLegTau3 / HadLegTau1)
 
                     #=================== recalculate Njettiness ======================
                     AK12JetLepLegPFCands = self.pf_cand_in_fat_jet(JetPFCands, AK12JetLepLeg, 1.2)
@@ -421,22 +453,6 @@ class ExampleAnalysis(Module):
                     self.RecKT12JetLepLegTau3_h.Fill(RecKT12JetLepLegTau3)
                     self.RecKT12JetLepLegTau4_h.Fill(RecKT12JetLepLegTau4)
                     self.RecKT12JetLepLegTau3Tau1_h.Fill(RecKT12JetLepLegTau3 / RecKT12JetLepLegTau1)
-
-                    self.LepGenMatch_h.Fill(0)
-                    if EleOrMu == "Ele" and MatchedGenEle is not None:
-                        self.LepGenMatch_h.Fill(1)
-                        GenMotherIsW = self.gen_mom_is_w(MatchedGenEle, GenParts)
-                        if GenMotherIsW:
-                            self.LepGenMatch_h.Fill(2)
-                            self.AK12JetGenMatchLepLegTau3Tau1_h.Fill(LepLegTau3 / LepLegTau1)
-                            self.AK12JetGenMatchHadLegTau3Tau1_h.Fill(HadLegTau3 / HadLegTau1)
-                    if EleOrMu == "Mu" and MatchedGenMu is not None:
-                        self.LepGenMatch_h.Fill(1)
-                        GenMotherIsW = self.gen_mom_is_w(MatchedGenMu, GenParts)
-                        if GenMotherIsW:
-                            self.LepGenMatch_h.Fill(2)
-                            self.AK12JetGenMatchLepLegTau3Tau1_h.Fill(LepLegTau3 / LepLegTau1)
-                            self.AK12JetGenMatchHadLegTau3Tau1_h.Fill(HadLegTau3 / HadLegTau1)
 
             #==========================AK8 jets============================
             FatJetHeavy, FatJetLight = self.sel_high_mass_fat_jet(FatJets, "msoftdrop")

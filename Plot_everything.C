@@ -1,8 +1,10 @@
 int Plot_everything()
 {
-    bool plot_log = true;
-    bool shape_compare = false;
+    bool plot_log = false;
+    bool shape_compare = true;
     int rebin = 1; 
+    float max_x = -1;
+    //max_x = 0.2;
 
     TString results_folder = "";
     TString hist_folder = "plots/";
@@ -10,11 +12,19 @@ int Plot_everything()
 
     std::vector<TString> hist_list =
     {
-        //"AK12JetLepLegTau3Tau1_h", "AK12JetHadLegTau3Tau1_h",
+        //"AK12JetLepLegTau3Tau1_h", "AK12JetLepLegTau3Tau2_h",
+        //"AK12JetLepLegTau4Tau1_h", "AK12JetLepLegTau4Tau2_h",
+        //"AK12JetHadLegTau3Tau1_h", "AK12JetHadLegTau3Tau2_h",
         //"AK12JetHeavySDMass_h", "AK12JetLightSDMass_h",
         //"AK12JetLepLegSDMass_h", "AK12JetHadLegSDMass_h",
-        //"AK12JetImbaSDMass_h", "AK12JetAveSDMass_h",
-        "BaseLineTest_h", "LepGenMatch_h"
+        //"AK12JetImbaSDMass_h",
+        //"AK12JetAveSDMass_h", "AK12JetAveSDMassBaseline_h",
+        //"BaseLineTest_h",
+        //"LepGenMatch_h", "LepGenMatchNoCut_h",
+        //"EleIsPFCand_h", "EleIsPFCandGenMatch_h", "EleNotPFCandGenMatch_h",
+        //"MuIsPFCand_h", "MuIsPFCandGenMatch_h", "MuNotPFCandGenMatch_h",
+        //"EleOrMu_h",
+        "EleRelIso03_h", "MuRelIso03_h"
     };
 
     struct st {TString file; TString name; Color_t color;};
@@ -46,6 +56,7 @@ int Plot_everything()
         if(shape_compare) reff = 1;
         float max_y = 0;
         float min_y = 0;
+        float line_width = 3;
 
         std::vector<TH1F*> plot_list;
 
@@ -56,7 +67,8 @@ int Plot_everything()
             TH1F* h1 = (TH1F*)f1->Get(hist);
             h1->Rebin(rebin);
             h1->SetLineColor(struct_list.at(i).color);
-            h1->SetLineWidth(2);
+            h1->SetLineWidth(line_width);
+            line_width = line_width - 0.2;
             //h1->SetMarkerStyle(20);
             leg->AddEntry(h1,struct_list.at(i).name,"l");
             if(shape_compare) h1->Scale(reff/h1->Integral());
@@ -83,6 +95,8 @@ int Plot_everything()
             TH1F* h1 = plot_list.at(i);
             if(i == 0)
             {
+                if(max_x != -1)
+                {h1->GetXaxis()->SetRangeUser(0, max_x);}
                 h1->GetYaxis()->SetRangeUser(min_y, max_y);
                 h1->Draw("hist");
             }
